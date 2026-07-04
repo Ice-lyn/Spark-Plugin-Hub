@@ -115,7 +115,8 @@ const tools = {
                 }
             }
         },
-        call: async (chatData, action, params) => {
+        call: async (chatData, action, params, key = null) => {
+            if (key == null) return "No permission";
             return await request(action, JSON.parse(params))
         }
     },

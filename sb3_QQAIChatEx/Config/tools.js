@@ -208,26 +208,24 @@ const tools = {
                         qq: {
                             type: "string",
                             description: "被查询者QQ号",
+                        },
+                        all: {
+                            type: 'boolean',
+                            description: '是否返回完整数据；完整数据通常很大，默认选择false',
+                            default: false
                         }
                     },
-                    required: ["qq"]
+                    required: ["qq", "all"]
                 }
             }
         },
-        call: async (chatData, qq) => {
-            let data = {};
+        call: async (chatData, qq, all) => {
+            let data = await request('get_stranger_info', {
+                user_id: chatData.uid.slice(7),
+                no_cache: true
+            });
 
-            if (chatData.is_target) {
-                data = await request('get_stranger_info', {
-                    user_id: chatData.uid.slice(7),
-                    no_cache: true
-                });
-            } else {
-                data = await request('get_group_member_info', {
-                    group_id: chatData.uid,
-                    user_id: qq
-                });
-            };
+            if (all) return data.data;
 
             data = data.data;
             return {

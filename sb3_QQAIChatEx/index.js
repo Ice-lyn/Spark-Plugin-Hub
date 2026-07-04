@@ -8,7 +8,7 @@ const retryMap = new Map(); // 重试操作次数
 const debounceMap = new Map(); // 防抖
 const tools = cleanTools(config.ai.tools, config.ai.untools); // 工具定义
 const toolsIndex = new Map( // 工具参数索引
-    tools.definition.map(obj => [obj.name, obj.function.parameters])
+    tools.definition.map(obj => [obj.function.name, obj.function.parameters.required])
 );
 
 const memoryDir = path.join(__dirname, 'memory');
@@ -92,7 +92,7 @@ async function onCommand(uid, pack, reply) {
             spark.msgbuilder.reply(pack.real_id),
             spark.msgbuilder.text("无权限，修改配置文件 或 星期四v我50即可获取 ovo")
         ]);
-    
+
     const cmd = pack.raw_message.slice(8).split(" ");
 
     switch (cmd[0]) {

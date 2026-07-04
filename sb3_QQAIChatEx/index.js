@@ -87,21 +87,63 @@ const targetsRegExp = new RegExp((
 ).join('|'), 'g');
 
 async function onCommand(uid, pack, reply) {
-    if (!config.admin.includes(pack.sender.user_id)) return;
+    if (!config.admin.includes(pack.sender.user_id))
+        return reply([
+            spark.msgbuilder.reply(pack.real_id),
+            spark.msgbuilder.text("无权限，修改配置文件 或 星期四v我50即可获取 ovo")
+        ]);
+    
     const cmd = pack.raw_message.slice(8).split(" ");
 
     switch (cmd[0]) {
         case "memory": { // 记忆相关
             if (cmd[1] === "reload") {
-                reply("记忆重载...");
                 memoryMap.delete(uid);
+                reply([
+                    spark.msgbuilder.reply(pack.real_id),
+                    spark.msgbuilder.text("记忆重载...")
+                ])
+
             } else if (cmd[1] === "compress") {
-                reply((await simpleCompress(uid)) + "");
                 memoryMap.delete(uid);
+                reply([
+                    spark.msgbuilder.reply(pack.real_id),
+                    spark.msgbuilder.text((await simpleCompress(uid)) + "")
+                ])
+
             } else if (cmd[1] === "delete") {
                 memoryMap.delete(uid);
                 fs.unlinkSync(path.join(memoryDir, `${uid}.json`));
-                reply("记忆清理...");
+                reply([
+                    spark.msgbuilder.reply(pack.real_id),
+                    spark.msgbuilder.text("记忆信息已清理..."),
+                ])
+
+            } else if (cmd[1] === "system") {
+                const prompt = cmd.slice(2).join(" ");
+                const memory = getMemory(uid).filter(item => item.role !== 'system');
+
+                if (system === "") { // 恢复默认
+                    setMemory(uid, memory)
+                    reply([
+                        spark.msgbuilder.reply(pack.real_id),
+                        spark.msgbuilder.text("提示词已恢复默认"),
+                    ])
+
+                } else {
+                    setMemory(uid, [
+                        {
+                            role: "system",
+                            content: prompt
+                        },
+                        ...memory
+                    ]);
+
+                    reply([
+                        spark.msgbuilder.reply(pack.real_id),
+                        spark.msgbuilder.text("提示词已设置，将会在当前场景下生效..."),
+                    ])
+                }
             }
             break;
         }
@@ -219,6 +261,7 @@ async function onCommand(uid, pack, reply) {
                 "    - reload",
                 "    - compress",
                 "    - delete",
+                "    - system <prompt: string>",
                 "",
                 "- tool       # 手动调用工具",
                 "    - _debug <tool_name: string> <data: json>",
@@ -321,7 +364,7 @@ async function onMessage(chatId, pack, reply) {
                 .forEach(text => {
                     setTimeout(() => {
                         reply(text)
-                    }, config.reply.linebreak.timeout * msgIndex);
+                    }, config.reply.linebreak.timeout * msgIndex + (text.length || 0));
                     msgIndex++
                 });
         } else reply(additionalMsg + msg);
@@ -339,6 +382,9 @@ async function callAPI(uid, data, pack, callback = (() => { }), canAddMemory = t
     };
 
     try {
+        const memoryData = getMemory(uid);
+        const systemPrompt = memoryData.find(msg => msg.role === 'system')?.content || config.ai.system;
+
         const sendData = {
             model: fallbackConfig.name,
             max_tokens: config.ai.maxTokens,
@@ -347,8 +393,8 @@ async function callAPI(uid, data, pack, callback = (() => { }), canAddMemory = t
             tools: tools.definition,
             tool_choice: 'auto',
             messages: [
-                { role: 'system', content: config.ai.system },
-                ...getMemory(uid)
+                { role: 'system', content: systemPrompt },
+                ...memoryData
             ]
         };
 
@@ -637,6 +683,20 @@ function getMemory(uid) {
     return merged;
 }
 
+// 设置记忆
+function setMemory(uid, data) {
+    if (!Array.isArray(data))
+        return false;
+
+    memoryMap.set(uid, data);
+    fs.writeFile(
+        path.join(memoryDir, `${uid}.json`),
+        JSON.stringify(data, null, 2),
+        () => { }
+    );
+}
+
+
 // 添加记忆
 function addMemory(uid, role, content, tool_calls = null, tool_call_id = null) {
     let memory = getMemory(uid);
@@ -652,17 +712,21 @@ function addMemory(uid, role, content, tool_calls = null, tool_call_id = null) {
     memory.push(message);
 
     // 超出时备份并裁剪
-    if (memory.length > config.memory.length) {
+    // === 修改处：计算非 system 消息数量 === //
+    const normalCount = memory.filter(msg => msg.role !== 'system').length;
+    if (normalCount > config.memory.length) {
         if (config.memory.bak) {
-            const removed = memory.slice(0, memory.length - config.memory.length);
+            // 备份时排除 system 消息
+            const normalMemory = memory.filter(msg => msg.role !== 'system');
+            const removed = normalMemory.slice(0, normalCount - config.memory.length);
             const bakPath = path.join(memoryBakDir, `${uid}.json`);
             let bak = [];
             if (fs.existsSync(bakPath)) bak = JSON.parse(fs.readFileSync(bakPath, 'utf8'));
             bak.push(...removed);
-            fs.writeFileSync(bakPath, JSON.stringify(bak, null, 2));
+            fs.writeFileSync(bakPath, JSON.stringify(bak, null, 2), () => { });
         }
 
-        // 安全裁剪：确保不拆散 tool_calls 配对
+        // 安全裁剪（自动保留 system）
         memory = safeSlice(memory, config.memory.length);
         memoryMap.set(uid, memory);
     }
@@ -675,39 +739,46 @@ function addMemory(uid, role, content, tool_calls = null, tool_call_id = null) {
 
 // 安全裁剪：保持消息完整性
 function safeSlice(memory, maxLength) {
-    // 从后往前保留，确保工具调用对不被拆散
-    const keep = memory.slice(-maxLength);
+    // === 修改处：提取 system 消息 === //
+    const systemMsg = memory.find(msg => msg.role === 'system');
+    const normalMemory = memory.filter(msg => msg.role !== 'system');
+
+    if (normalMemory.length <= maxLength) {
+        return memory; // 不需要裁剪
+    }
+
+    // 对普通消息进行裁剪
+    let sliced = normalMemory.slice(-maxLength);
 
     // 检查第一条保留的消息是否是孤立的 tool 消息
-    if (keep.length > 0 && keep[0].role === 'tool' && keep[0].tool_call_id) {
-        // 向前查找对应的 assistant 消息
-        const startIndex = memory.length - maxLength;
+    if (sliced.length > 0 && sliced[0].role === 'tool' && sliced[0].tool_call_id) {
+        const startIndex = normalMemory.length - maxLength;
         for (let i = startIndex - 1; i >= 0; i--) {
-            if (memory[i].role === 'assistant' &&
-                memory[i].tool_calls?.some(tc => tc.id === keep[0].tool_call_id)) {
-                // 找到了，把这对一起保留
-                const realKeep = memory.slice(i);
-                return realKeep.slice(-maxLength - 1); // 多保留一条，确保不超过限制太多
+            if (normalMemory[i].role === 'assistant' &&
+                normalMemory[i].tool_calls?.some(tc => tc.id === sliced[0].tool_call_id)) {
+                const realKeep = normalMemory.slice(i);
+                sliced = realKeep.slice(-maxLength - 1);
+                break;
             }
         }
-        // 找不到配对的 assistant，移除这个孤立的 tool 消息
-        return keep.slice(1);
-    }
-
-    // 检查最后一条移除的消息是否是带 tool_calls 的 assistant
-    if (memory.length > maxLength) {
-        const removedAssistant = memory[memory.length - maxLength - 1];
-        if (removedAssistant?.role === 'assistant' && removedAssistant.tool_calls) {
-            // 移除 keep 中对应的 tool 消息
-            const toolIds = new Set(removedAssistant.tool_calls.map(tc => tc.id));
-            const filtered = keep.filter(msg =>
-                !(msg.role === 'tool' && toolIds.has(msg.tool_call_id))
-            );
-            return filtered;
+        if (sliced.length > 0 && sliced[0].role === 'tool') {
+            sliced = sliced.slice(1);
         }
     }
 
-    return keep;
+    // 检查是否需要移除孤立的 tool 消息
+    if (normalMemory.length > maxLength) {
+        const removedAssistant = normalMemory[normalMemory.length - maxLength - 1];
+        if (removedAssistant?.role === 'assistant' && removedAssistant.tool_calls) {
+            const toolIds = new Set(removedAssistant.tool_calls.map(tc => tc.id));
+            sliced = sliced.filter(msg =>
+                !(msg.role === 'tool' && toolIds.has(msg.tool_call_id))
+            );
+        }
+    }
+
+    // === 修改处：将 system 消息放回最前面 === //
+    return systemMsg ? [systemMsg, ...sliced] : sliced;
 }
 
 // === 格式化消息相关 === //
@@ -887,7 +958,7 @@ function simpleCompress(uid) {
     // 更新记忆
     memoryMap.set(uid, compressed);
     const filePath = path.join(memoryDir, `${uid}.json`);
-    fs.writeFileSync(filePath, JSON.stringify(compressed, null, 2));
+    fs.writeFileSync(filePath, JSON.stringify(compressed, null, 2), () => { });
 
     return `简单压缩完成: ${memory.length} -> ${compressed.length} 条消息`;
 }

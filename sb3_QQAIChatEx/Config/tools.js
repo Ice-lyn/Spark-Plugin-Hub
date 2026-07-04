@@ -174,7 +174,7 @@ const tools = {
             if (chatData.is_target)
                 return "当前为私聊环境，无需查询";
 
-            const data = await request("get_group_member_list", {
+            let data = await request("get_group_member_list", {
                 group_id: chatData.uid
             })
 

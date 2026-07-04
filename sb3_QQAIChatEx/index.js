@@ -155,8 +155,7 @@ async function onCommand(uid, pack, reply) {
                 const toolArgs = toolsArgsSorting(
                     toolsIndex.get(cmd[2]), (cmd.slice(3).join(" ") || '{}')
                 );
-                const argsArray = Object.values(toolArgs);
-                reply(JSON.stringify(argsArray, null, 4));
+                reply(`${cmd[2]}\n${toolsIndex.get(cmd[2])}\n${JSON.stringify(toolArgs, null, 4)}`);
                 return;
             }
 
@@ -164,14 +163,13 @@ async function onCommand(uid, pack, reply) {
                 const toolArgs = toolsArgsSorting(
                     toolsIndex.get(cmd[1]), (cmd.slice(2).join(" ") || '{}')
                 );
-                const argsArray = Object.values(toolArgs);
                 const toolsData = await tools.calls[cmd[1]](
                     {
                         uid: uid,
                         pack: pack,
                         config: config,
                         is_target: uid.startsWith("target_")
-                    }, ...argsArray
+                    }, ...toolArgs
                 );
 
                 reply((typeof toolsData === 'string'

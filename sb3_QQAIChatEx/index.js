@@ -577,24 +577,28 @@ function processDebounceCache(uid, pack, reply) {
 function toolsArgsSorting(tool, args) {
     const order = tool || [];
     const parsed = typeof args === 'string' ? JSON.parse(args) : args;
-    const result = {};
-    const remaining = {};
 
-    // 先按顺序添加
+    // 直接按顺序构建数组
+    const result = [];
+    const usedKeys = new Set();
+
+    // 按顺序添加
     for (const key of order) {
         if (key in parsed) {
-            result[key] = parsed[key];
+            result.push(parsed[key]);
+            usedKeys.add(key);
         }
     }
 
-    // 添加未在顺序表中的
+    // 添加未在顺序中的参数（保持原始顺序）
     for (const key in parsed) {
-        if (!(key in result)) {
-            result[key] = parsed[key];
+        if (!usedKeys.has(key)) {
+            result.push(parsed[key]);
+            usedKeys.add(key);
         }
     }
 
-    return result;
+    return result; // 直接返回数组
 }
 
 // 去除一些函数

@@ -31,7 +31,7 @@ const config = {
         },
         Cmd: { // 运行命令
             enable: true, // 是否启用
-            divisionNum: 10000, // 分割长度
+            divisionNum: 100000, // 分割长度
             player: [ // 普通用户可以执行的指令
                 "/list",
                 "/help"
@@ -70,7 +70,6 @@ const config = {
         API: (msg) => {
             return ll.imports('WordFilter', 'filter')(msg);
         }
-
     }
 }
 
@@ -191,7 +190,15 @@ spark.on('message.group.normal', async (pack, reply) => {
             }
             return chunks;
         };
-        splitIntoChunks(res, config.QQ2MC.Cmd.divisionNum).forEach(msg => reply(msg));
+
+        let msgIndex = 0;
+        splitIntoChunks(res, config.QQ2MC.Cmd.divisionNum)
+            .forEach(msg => {
+                setTimeout(() => {
+                    reply(text)
+                }, 500 * msgIndex);
+                msgIndex++
+            });
 
         logger.setTitle("QQCommand");
         logger.info(`${userName} >> ${msg}\n>> ${res}\n`);

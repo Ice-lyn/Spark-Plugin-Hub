@@ -443,9 +443,8 @@ async function callAPI(uid, data, pack, callback = (() => { }), canAddMemory = t
                 let toolResult = null;
                 if (tools.calls[toolName]) {
                     try {
-                        const argsArray = Object.values(toolArgs);
                         toolResult = await Promise.resolve(
-                            tools.calls[toolName](chatData, ...argsArray)
+                            tools.calls[toolName](chatData, ...toolArgs)
                         );
                         toolResult = typeof toolResult === 'string' ? toolResult : JSON.stringify(toolResult);
                     } catch (e) {

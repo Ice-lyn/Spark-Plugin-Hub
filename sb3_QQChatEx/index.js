@@ -31,6 +31,7 @@ const config = {
         },
         Cmd: { // 运行命令
             enable: true, // 是否启用
+            divisionNum: 10000, // 分割长度
             player: [ // 普通用户可以执行的指令
                 "/list",
                 "/help"
@@ -182,8 +183,16 @@ spark.on('message.group.normal', async (pack, reply) => {
     ) {
         const res = mc.runcmdEx(msg)?.output ?? "";
         if (res === false) return;
-        res.match(/.{1,300}/g) || []
-            .forEach(msg => reply(msg));
+        // 不按换行分割，直接按字符数切分
+        const splitIntoChunks = (str, size) => {
+            const chunks = [];
+            for (let i = 0; i < str.length; i += size) {
+                chunks.push(str.slice(i, i + size));
+            }
+            return chunks;
+        };
+        splitIntoChunks(res, config.QQ2MC.Cmd.divisionNum).forEach(msg => reply(msg));
+
         logger.setTitle("QQCommand");
         logger.info(`${userName} >> ${msg}\n>> ${res}\n`);
         logger.setTitle("Server");

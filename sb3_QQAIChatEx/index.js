@@ -113,7 +113,7 @@ async function onCommand(uid, pack, reply) {
 
             } else if (cmd[1] === "delete") {
                 memoryMap.delete(uid);
-                fs.unlinkSync(path.join(memoryDir, `${uid}.json`));
+                try { fs.unlinkSync(path.join(memoryDir, `${uid}.json`)) } catch (e) { }
                 reply([
                     spark.msgbuilder.reply(pack.real_id),
                     spark.msgbuilder.text("记忆信息已清理..."),

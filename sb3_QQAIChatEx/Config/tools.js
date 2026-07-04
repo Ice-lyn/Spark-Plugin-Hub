@@ -288,7 +288,7 @@ const tools = {
                             default: false
                         }
                     },
-                    required: ["count"]
+                    required: ["count", "reverseOrder"]
                 }
             }
         },

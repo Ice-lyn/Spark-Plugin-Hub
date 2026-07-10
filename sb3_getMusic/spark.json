@@ -1,0 +1,10 @@
+{
+    "name": "getMusic",
+    "author": "冰凌呀",
+    "version": [0, 0, 1],
+    "desc": "在QQ群里快捷获取音乐吧~",
+    "loadmode":"bds",
+    "priority": "post",
+    "permission": "core",
+    "load": true
+}

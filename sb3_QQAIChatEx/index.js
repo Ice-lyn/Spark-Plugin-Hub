@@ -1,3 +1,4 @@
+const parseCQString = require('../../handles/parserCQString.js');
 const config = require('./Config/config.js');
 const axios = require('axios');
 const path = require('path');
@@ -361,7 +362,10 @@ async function onMessage(chatId, pack, reply) {
                 .map(text => codeMap ? text.replace(/__CODE_\d+__/g, m => codeMap.get(m)) : text)
                 .forEach(text => {
                     setTimeout(() => {
-                        reply(text)
+                        if (config.reply.CQCode)
+                            reply(parseCQString.parse(text));
+                        else
+                            reply(text);
                     }, config.reply.linebreak.timeout * msgIndex + (text.length || 0));
                     msgIndex++
                 });

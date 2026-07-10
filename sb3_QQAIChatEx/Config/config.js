@@ -119,6 +119,7 @@ module.exports = {
     // === 回复设置 === //
     reply: {
         tokenInfo: false, // Token消耗显示
+        CQCode: true, // 解析CQ码消息
         linebreak: {// 多次回复
             enable: true, // 启用
             timeout: 500, // 延迟毫秒

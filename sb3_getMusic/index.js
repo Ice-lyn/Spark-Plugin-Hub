@@ -96,14 +96,29 @@ spark.on("event.aichat.starts", () => {
                         query: {
                             type: "string",
                             description: "查询的音乐名称",
+                        },
+                        lyrics: {
+                            type: 'boolean',
+                            description: '是否返回完整歌词；通常很大，默认选择false',
+                            default: false
                         }
                     },
-                    required: ["query"]
+                    required: ["query", "lyrics"]
                 }
             }
         },
-        call: async (chatData, query) => {
-            return await getMusic(query);
+        call: async (chatData, query, lyrics) => {
+            const data = await getMusic(query);
+            return data.map(i => {
+                return {
+                    '名称': i.title,
+                    '作者': i.author,
+                    '歌词': lyrics ? "*" : i.lrc,
+                    '原页面': i.link,
+                    '音乐直链': i.url,
+                    '音乐图标': i.pic
+                }
+            })
         }
     })
 })

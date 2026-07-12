@@ -1,7 +1,7 @@
 {
     "name": "QQChatEX",
     "author": "冰凌呀",
-    "version": [1, 0, 1],
+    "version": [1, 0, 2],
     "desc": "更好的聊天转发插件",
     "loadmode":"bds",
     "priority": "post",

@@ -243,7 +243,7 @@ spark.on('message.group.normal', async (pack, reply) => {
         splitIntoChunks(res, config.QQ2MC.Cmd.divisionNum)
             .forEach(msg => {
                 setTimeout(() => {
-                    reply(text)
+                    reply(msg)
                 }, 500 * msgIndex);
                 msgIndex++
             });

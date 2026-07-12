@@ -1,77 +1,123 @@
-let is_reload = false;
-const config = {
-    // 转发聊天的群聊
-    QQChat: 759676433,
-    Admin: new Set([
-        1669044502,
-        3827764490,
-        ...spark.env.get("admin_qq") ?? []
-    ]),
+// 补药修改这里的配置，去网页面板修改！！！
+// 补药修改这里的配置，去网页面板修改！！！
+// 补药修改这里的配置，去网页面板修改！！！
 
+// （硬编码配置除外）
+
+
+// === 配置相关 === //
+const configFile = spark.getFileHelper('QQChatEX');
+configFile.initFile("config.json", {
+    QQChat: spark.env.get("main_group"),
+    Admin: [...spark.env.get("admin_qq") ?? []],
     MC2QQ: {
-        Chat: true, // 聊天
-        Join: true, // 加入
-        Left: true, // 退出
-        Say: true // 广播
+        Chat: true,
+        Join: true,
+        Left: true,
+        Say: true
     },
 
     QQ2MC: {
-        Chat: { // 聊天
-            enable: true, // 是否启用
-            face: true, // 表情转义 (需要QQFace插件材质包)
-            export: (userName, msg) => { // 对其他聊天插件兼容
-                if (ll.hasExported("BDSLM", "addMsg"))
-                    ll.imports("BDSLM", "addMsg")({
-                        type: 'chat',
-                        source: "QQ",
-                        realName: `§eQQ群§7|§6${userName}§a`,
-                        msg: msg
-                    });
-            }
+        Chat: {
+            enable: true,
+            face: true,
+            imgUrl: false
         },
-        Cmd: { // 运行命令
-            enable: true, // 是否启用
-            divisionNum: 100000, // 分割长度
-            player: [ // 普通用户可以执行的指令
+        Cmd: {
+            enable: true,
+            divisionNum: 100000,
+            player: [
                 "/list",
                 "/help"
             ]
         }
     },
 
-    // 导出工具给大模型使用
     AITools: {
-        enable: true, // 是否启用
-        chat: true, // 聊天记录
-        system: true, // 进出信息
+        enable: true,
+        chat: true,
+        system: true,
     },
 
-    // 敏感词过滤
     WordFilter: {
-        enable: true, // 是否启用
-        mode: 1, // 调用模式 (1: 内置的, 2: API)
-        use: { // 启用过滤的功能
-            QQ: true, // 消息发送至QQ群时过滤
-            MC: true // 消息发送至MC时过滤
+        enable: true,
+        use: {
+            QQ: true,
+            MC: true
         },
 
-        // 内置的过滤系统
-        // 内置的系统过滤可能比较简单
         Internal: {
-            word: ["操你", "傻逼", "死", "fuck"], // 敏感词列表
-            replaceChar: "喵" // 替换敏感词的字符，比如：fuck -> 喵喵喵喵
-        },
-
-        // API模式
-        // 调用解析
-        // 使用此功能可接入其更强大的敏感词过滤插件
-        // 输入玩家发送的原始信息，返回过滤后的信息
-        // >> 需要LSE-js基础，如果你不知道此项该如何使用请不要使用此项！
-        API: (msg) => {
-            return ll.imports('WordFilter', 'filter')(msg);
+            word: ["操你", "傻逼", "死", "fuck"],
+            replaceChar: "喵"
         }
     }
+})
+
+// 网页配置
+const config = JSON.parse(configFile.read("config.json"));
+spark.web.createConfig("QQChatEX")
+    .number("QQChat", config.QQChat, "要转发聊天的群")
+    .array("Admin", config.Admin, "可以执行后台指令的QQ")
+
+    .switch("MC2QQ.Chat", config.MC2QQ.Chat, "MC2QQ-聊天信息")
+    .switch("MC2QQ.Join", config.MC2QQ.Join, "MC2QQ-加入信息")
+    .switch("MC2QQ.Left", config.MC2QQ.Left, "MC2QQ-退出信息")
+    .switch("MC2QQ.Say", config.MC2QQ.Say, "MC2QQ-后台广播")
+
+    .switch("QQ2MC.Chat.enable", config.QQ2MC.Chat.enable, "QQ2MC-聊天信息")
+    .switch("QQ2MC.Chat.face", config.QQ2MC.Chat.face, "QQ2MC-转义表情 (需要QQFace插件材质包)")
+    .switch("QQ2MC.Chat.imgUrl", config.QQ2MC.Chat.imgUrl, "QQ2MC-转义图片url")
+
+    .switch("QQ2MC.Cmd.enable", config.QQ2MC.Cmd.enable, "QQ2MC-执行后台")
+    .number("QQ2MC.Cmd.divisionNum", config.QQ2MC.Cmd.divisionNum, "QQ2MC-命令返回值分割界限")
+    .array("QQ2MC.Cmd.player", config.QQ2MC.Cmd.player, "QQ2MC-玩家可以执行的指令")
+
+    .switch("AITools.enable", config.AITools.enable, "AITool-外部AI工具调用")
+    .switch("AITools.chat", config.AITools.chat, "AITool-模型可读取聊天记录")
+    .switch("AITools.system", config.AITools.system, "AITool-模型可读取进出记录")
+
+    .switch("WordFilter.enable", config.WordFilter.enable, "WordFilter-敏感词过滤")
+    .switch("WordFilter.use.QQ", config.WordFilter.use.QQ, "WordFilter-QQ消息过滤")
+    .switch("WordFilter.use.MC", config.WordFilter.use.MC, "WordFilter-MC消息过滤")
+    .array("WordFilter.Internal.word", config.WordFilter.Internal.word, "WordFilter-敏感词列表")
+    .text("WordFilter.Internal.replaceChar", config.WordFilter.Internal.replaceChar, "WordFilter-替换字符")
+
+    .register();
+
+spark.on("config.update.QQChatEX", (key, val) => {
+    if (["Admin", "QQ2MC.Cmd.player", "WordFilter.Internal.word"].includes(key))
+        val = val.map(String);
+
+    // 处理嵌套配置项的赋值
+    const keys = key.split('.');
+    if (keys.length === 1) {
+        config[key] = val;
+    } else {
+        let obj = config;
+        for (let i = 0; i < keys.length - 1; i++) {
+            obj = obj[keys[i]];
+        }
+        obj[keys[keys.length - 1]] = val;
+    }
+
+    configFile.write('config.json', JSON.stringify(config, null, 4));
+});
+
+// === 硬编码配置文件 === //
+
+// 对其他聊天插件兼容
+config.QQ2MC.Chat.export = (userName, msg) => {
+    if (ll.hasExported("BDSLM", "addMsg"))
+        ll.imports("BDSLM", "addMsg")({
+            type: 'chat',
+            source: "QQ",
+            realName: `§eQQ群§7|§6${userName}§a`,
+            msg: msg
+        });
 }
+
+
+
 
 // AI工具调用
 const aiMsgList = [];
@@ -111,6 +157,7 @@ spark.on("event.aichat.starts", () => {
     });
 });
 
+let is_reload = false;
 
 // === MC2QQ === //
 // Chat - 聊天
@@ -174,14 +221,15 @@ spark.on('message.group.normal', async (pack, reply) => {
     const msg = (await formatMsg(pack.message, pack)).replace(/\n/g, "\\n");
 
     // Cmd - 运行命令
-    if (config.QQ2MC.Cmd
+    if (config.QQ2MC.Cmd.enable
         && msg.startsWith("/")
-        && (config.Admin.has(pack.user_id - 0)
+        && (config.Admin.includes(`${pack.user_id}`)
             || config.QQ2MC.Cmd.player.some(cmd => msg.startsWith(cmd))
         )
     ) {
         const res = mc.runcmdEx(msg)?.output ?? "";
-        if (res === false) return;
+        if (res.includes("请检查命令是否存在，以及您对它是否拥有使用权限。")) return;
+
         // 不按换行分割，直接按字符数切分
         const splitIntoChunks = (str, size) => {
             const chunks = [];
@@ -233,12 +281,9 @@ spark.on('message.group.normal', async (pack, reply) => {
 
 const sensitive_regex = new RegExp(config.WordFilter.Internal.word.join("|"), "gi");
 function WFilter(msg) {
-    if (config.WordFilter.mode === 1) {
-        msg = msg.replace(sensitive_regex, (match) => {
-            return config.WordFilter.replaceChar.repeat(match.length);
-        });
-    } else msg = config.WordFilter.API(msg);
-    return msg;
+    return msg.replace(sensitive_regex, (match) => {
+        return config.WordFilter.replaceChar.repeat(match.length);
+    });
 }
 
 const faceList = {
@@ -260,11 +305,17 @@ async function formatMsg(msg, pack) {
     const results = await Promise.all(msg.map(async (t) => {
         switch (t.type) {
             case 'text': return t.data.text;
-            case 'image': return "[图片]";
+            case 'image': {
+                return config.QQ2MC.Chat.imgUrl
+                    ? `[图片](${t.data.url})`
+                    : "[图片]"
+            }
             case 'face': {
-                if (!config.QQ2MC.Chat.face) return "[表情]";
-                if (emojiList[index])
-                    return emojiList[index];
+                if (!config.QQ2MC.Chat.face) return t.data.faceText || "[表情]";
+                if (faceList[t.data.id])
+                    return faceList[t.data.id];
+                else
+                    return t.data.faceText || "[表情]";
             }
             case 'at': {
                 const info = await spark.QClient.getGroupMemberInfo(pack.group_id, t.data.qq)

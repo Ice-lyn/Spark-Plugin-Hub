@@ -221,12 +221,11 @@ spark.on('message.group.normal', async (pack, reply) => {
     const msg = (await formatMsg(pack.message, pack)).replace(/\n/g, "\\n");
 
     // Cmd - 运行命令
-    if (config.QQ2MC.Cmd.enable
-        && msg.startsWith("/")
-        && (config.Admin.includes(`${pack.user_id}`)
+    if (config.QQ2MC.Cmd.enable && msg.startsWith("/")) {
+        if (!(config.Admin.includes(`${pack.user_id}`)
             || config.QQ2MC.Cmd.player.some(cmd => msg.startsWith(cmd))
-        )
-    ) {
+        )) return;
+
         const res = mc.runcmdEx(msg)?.output ?? "";
         if (res.includes("请检查命令是否存在，以及您对它是否拥有使用权限。")) return;
 

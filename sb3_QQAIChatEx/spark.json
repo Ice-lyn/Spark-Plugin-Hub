@@ -1,7 +1,7 @@
 {
     "name": "QQAIChatEx",
     "author": "冰凌呀",
-    "version": [0, 0, 6],
+    "version": [0, 0, 7],
     "desc": "在你的QQ群内接入AI吧~",
     "loadmode":"bds",
     "priority": "post",

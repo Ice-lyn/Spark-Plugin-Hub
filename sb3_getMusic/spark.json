@@ -1,8 +1,8 @@
 {
     "name": "getMusic",
     "author": "冰凌呀",
-    "version": [0, 0, 1],
-    "desc": "在QQ群里快捷获取音乐吧~",
+    "version": [0, 0, 2],
+    "desc": "在QQ群里快捷获取音乐吧~ 支持自动解析网易云音乐!",
     "loadmode":"bds",
     "priority": "post",
     "permission": "core",

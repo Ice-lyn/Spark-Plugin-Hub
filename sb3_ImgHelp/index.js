@@ -7,7 +7,24 @@ const config = {
     private: [1669044502],
     private_all: true,
 
-    mode: 0, // 0: 精准匹配 1: 关键词匹配
+    // 功能列表
+    mode: {
+        ai_tool: true, // 让大模型调用
+        send_mode: 0, // 主动发送模式 -1: 关闭 0: 精准匹配 1: 关键词匹配
+        local_file: true, // 加载本地图片
+        fileExt: [ // 本地图片支持的后缀
+            ".jpg",
+            ".jpeg",
+            ".png",
+            ".gif",
+            ".webp"
+        ]
+    },
+
+    // 预设图片表
+    // 支持网络URL和本地文件名
+    // 该项目的优先级高于本地文件名
+    // 不要有重名的!!!!!!!!!!!!!!!!!!
     imgs: {
         "/光遇 每日任务": "https://api.qmkjcm.cn/api/gy/rwt/images/sc_image.jpg",
         "/光遇 复刻先祖": "https://api.qmkjcm.cn/api/gy/fk/images/sc_image.jpg",

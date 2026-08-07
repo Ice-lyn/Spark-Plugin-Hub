@@ -175,7 +175,7 @@ async function onCommand(uid, pack, reply) {
 
                 reply((typeof toolsData === 'string'
                     ? toolsData
-                    : JSON.stringify(toolsData)
+                    : JSON.stringify(toolsData, null, 4)
                 ));
             } catch (e) {
                 reply(`工具执行错误: ${e.message}`);

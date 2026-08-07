@@ -87,6 +87,29 @@ spark.on('message.private.friend', (pack, reply) => {
     onMessage(pack.raw_message?.trim() || '', reply);
 });
 
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+async function onMessage(rawMsg, reply) {
+    if (!rawMsg || config.mode.send_mode === -1) return;
+
+    // 精准匹配
+    if (config.mode.send_mode === 0)
+        return imgMap.has(rawMsg)
+            ? reply(imgMap.get(rawMsg))
+            : null;
+
+    // 模糊匹配
+    for (const [name, url] of [...imgMap]) {
+        if (!rawMsg.includes(name)) continue;
+
+        try {
+            await reply(spark.msgbuilder.img(url));
+            await sleep(300);
+        } catch (error) {
+            logger.error(`发送图片失败: ${error.message}`);
+        }
+    }
+}
+
 // AI工具调用
 spark.on("event.aichat.starts", () => {
     // 合并所有可用图片命令
@@ -121,42 +144,3 @@ spark.on("event.aichat.starts", () => {
         }
     });
 });
-
-async function onMessage(rawMsg, reply) {
-    if (!rawMsg) return "rawMsg is null";
-
-    let imageUrls = [];
-    if (config.mode === 0) { // 精准匹配
-        if (config.imgs[rawMsg] != null) {
-            imageUrls = [config.imgs[rawMsg]];
-        }
-    } else { // 关键词匹配
-        imageUrls = getImagesByKeyword(rawMsg);
-    }
-
-    if (imageUrls.length === 0) return "url length is 0";
-
-    for (const url of imageUrls) {
-        try {
-            await reply(spark.msgbuilder.img(url));
-            await sleep(300);
-        } catch (error) {
-            logger.error(`发送图片失败: ${error.message}`);
-        }
-    }
-    return "图片已发送";
-}
-
-function getImagesByKeyword(text) {
-    const results = [];
-    for (const [key, value] of Object.entries(config.imgs)) {
-        if (text.includes(key)) {
-            results.push(value);
-        }
-    }
-    return results;
-}
-
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}

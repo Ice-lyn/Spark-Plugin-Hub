@@ -1,0 +1,14 @@
+{
+    "name": "ChatExport",
+    "author": "冰凌呀",
+    "version": [
+        0,
+        0,
+        1
+    ],
+    "desc": "导出QQ群的聊天记录吧~",
+    "loadmode": "bds",
+    "priority": "post",
+    "permission": "core",
+    "load": true
+}

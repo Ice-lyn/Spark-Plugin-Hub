@@ -314,22 +314,10 @@ const tools = {
                     });
                 }
 
-                // 预定义格式化函数
-                function formatTimestamp(timestamp) {
-                    const date = new Date(timestamp * 1000);
-                    const year = date.getFullYear();
-                    const month = String(date.getMonth() + 1).padStart(2, '0');
-                    const day = String(date.getDate()).padStart(2, '0');
-                    const hours = String(date.getHours()).padStart(2, '0');
-                    const minutes = String(date.getMinutes()).padStart(2, '0');
-                    const seconds = String(date.getSeconds()).padStart(2, '0');
-                    return `${year}/${month}/${day} ${hours}:${minutes}:${seconds}`;
-                };
-
                 // 批量处理
                 msgList = msgList?.data?.messages?.map(msg => {
                     if (msg?.message?.[0]?.data?.text?.startsWith("📊 Token消耗")) return;
-                    const timeStr = formatTimestamp(msg.time);
+                    const timeStr = (new Date(msg.time * 1000)).toLocaleString();
                     const sender = msg.sender.card || msg.sender.nickname;
                     return `[${timeStr}][${sender} (${msg.sender.user_id})] >> ${msg.raw_message}`;
                 });

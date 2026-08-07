@@ -33,22 +33,47 @@ const config = {
     }
 };
 
-// 加载本地图片
-const localImages = {};
-const imagesDir = path.join(__dirname, 'images');
-if (fs.existsSync(imagesDir)) {
-    const files = fs.readdirSync(imagesDir);
-    files.forEach(file => {
-        const name = path.parse(file).name; // abc.jpg -> abc
-        const ext = path.extname(file).toLowerCase();
-        if (['.jpg', '.jpeg', '.png', '.gif', '.webp'].includes(ext)) {
-            localImages[name] = path.join(imagesDir, file);
-            // 同时添加到 imgs 供匹配
-            config.imgs[`${name}`] = path.join(imagesDir, file);
-        }
-    });
-    logger.info(`加载了 ${Object.keys(localImages).length} 张本地图片`);
-} else fs.mkdirSync(imagesDir, { recursive: true });
+
+const imgMap = new Map(Object.entries(config.imgs));
+
+
+// 加载本地图片文件夹
+let isInit = true;
+addFileImg();
+function addFileImg() {
+    if (config.mode.local_file) {
+        const cfgImgsList = Object.values(config.imgs);
+        const cfgImgsData = Object.fromEntries(
+            Object.entries(config.imgs).map(([key, value]) => [value, key])
+        );
+
+        if (isInit) isInit = false;
+
+        const imgDir = path.join(__dirname, 'images');
+        if (fs.existsSync(imgDir)) {
+            let loadNum = 0;
+            fs.readdirSync(imgDir)
+                .forEach(file => {
+                    if (!config.mode.fileExt.includes(
+                        path.extname(file).toLowerCase()
+                    )) return;
+
+                    const name = path.parse(file).name;
+
+                    if (!isInit && imgMap.get(name)) return;
+                    if (cfgImgsList.includes(name))
+                        imgMap.set(cfgImgsData[name], path.join(imgDir, file));
+                    else
+                        imgMap.set(name, path.join(imgDir, file));
+                    loadNum++;
+                });
+            if (loadNum >= 1)
+                logger.info(`加载了 ${loadNum} 张本地图片`);
+        } else fs.mkdirSync(imgDir, { recursive: true });
+    }
+}
+
+
 
 // 群聊
 spark.on('message.group.normal', (pack, reply) => {

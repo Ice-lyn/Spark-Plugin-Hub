@@ -112,22 +112,38 @@ async function onMessage(rawMsg, reply) {
 
 // AI工具调用
 spark.on("event.aichat.starts", () => {
-    // 合并所有可用图片命令
-    const allCmds = [...Object.keys(config.imgs), ...Object.keys(localImages).map(k => `/${k}`)];
+    if (!config.mode.ai_tool) return;
 
-    spark.emit("event.aichat.add_tools", "send_presupposition_image", {
+    spark.emit("event.aichat.add_tools", "get_preset_image_list", {
         definition: {
             type: "function",
             function: {
                 name: "send_image",
-                description: "向用户发送预设图片",
+                description: "获取所有预设图片列表，每次调用时刷新缓存",
+                parameters: {
+                    type: "object",
+                    properties: {},
+                    required: []
+                }
+            }
+        },
+        call: () => {
+            addFileImg();
+            return [...imgMap.keys()];
+        }
+    });
+
+    spark.emit("event.aichat.add_tools", "send_preset_image", {
+        definition: {
+            type: "function",
+            function: {
+                description: "向用户发送预设图片，可以当表情使用; 使用前请调用get_preset_image_list工具获取列表",
                 parameters: {
                     type: "object",
                     properties: {
                         image: {
                             type: "string",
-                            description: "图片预设词",
-                            enum: allCmds
+                            description: `图片预设词`
                         }
                     },
                     required: ["image"]
@@ -135,12 +151,14 @@ spark.on("event.aichat.starts", () => {
             }
         },
         call: async (chatData, image) => {
-            return await onMessage(image, (...msg) => {
-                if (chatData.is_target)
-                    return spark.QClient.sendPrivateMsg(chatData.uid.slice(7), ...msg);
-                else
-                    return spark.QClient.sendGroupMsg(chatData.uid, ...msg);
-            }) ?? "";
+            if (!imgMap.has(image))
+                return `无法找到与 "" 相关的图片/表情，请修正后再次尝试，或调用get_preset_image_list工具获取新列表`;
+
+            const msg = spark.msgbuilder.img(imgMap.get(image))
+            if (chatData.is_target)
+                return spark.QClient.sendPrivateMsg(chatData.uid.slice(7), msg);
+            else
+                return spark.QClient.sendGroupMsg(chatData.uid, msg);
         }
     });
 });

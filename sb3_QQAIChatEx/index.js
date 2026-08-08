@@ -420,6 +420,25 @@ async function callAPI(uid, data, pack, callback = (() => { }), canAddMemory = t
 
         const message = response.data.choices[0].message;
 
+        // 处理普通文本回复
+        if (message.content) {
+            addMemory(uid, 'assistant', message.content);
+            callback(message.content, response);
+
+            // 重置防抖
+            if (config.call.debounce.enable) {
+                const ctx = getDebounceContext(uid);
+                ctx.processing = false;
+                if (ctx.timer) {
+                    clearTimeout(ctx.timer);
+                    ctx.timer = null;
+                }
+                // 处理缓存中的下一条消息
+                if (ctx.cache.length > 0)
+                    processDebounceCache(uid, pack, callback);
+            }
+        }
+
         // 处理工具调用
         if (message.tool_calls && message.tool_calls.length > 0) {
             // 添加助手消息（包含工具调用）
@@ -471,25 +490,6 @@ async function callAPI(uid, data, pack, callback = (() => { }), canAddMemory = t
             // 递归调用继续对话（不重复添加用户消息）
             if (message.content) callback(message.content, response);
             return callAPI(uid, data, pack, callback, false);
-        }
-
-        // 处理普通文本回复
-        if (message.content) {
-            addMemory(uid, 'assistant', message.content);
-            callback(message.content, response);
-
-            // 重置防抖
-            if (config.call.debounce.enable) {
-                const ctx = getDebounceContext(uid);
-                ctx.processing = false;
-                if (ctx.timer) {
-                    clearTimeout(ctx.timer);
-                    ctx.timer = null;
-                }
-                // 处理缓存中的下一条消息
-                if (ctx.cache.length > 0)
-                    processDebounceCache(uid, pack, callback);
-            }
         }
     } catch (e) {
         logger.error('[QQAIChatEx] API 调用失败: ' + e);

@@ -1,6 +1,67 @@
 const axios = require('axios');
 
 const tools = {
+    // 发送卡片
+    "send_music_card": {
+        definition: {
+            type: "function",
+            function: {
+                description: "发送第三方音乐卡片消息;虽然说是音乐卡片，但是你可以用它的结构发任何东西",
+                parameters: {
+                    type: "object",
+                    properties: {
+                        type: {
+                            type: "string",
+                            description: "平台",
+                        },
+                        title: {
+                            type: "string",
+                            description: "标题",
+                        },
+                        content: {
+                            type: "string",
+                            description: "内容",
+                        },
+                        image: {
+                            type: "string",
+                            description: "外显图片",
+                        },
+                        url: {
+                            type: "string",
+                            description: "跳转URL",
+                        },
+                        audio: {
+                            type: "string",
+                            description: "[可选] 音频",
+                        }
+                    },
+                    required: ["type", "title", "content", "image", "url"]
+                }
+            }
+        },
+        call: async (chatData, type = "qq", title = "", content = "", image = "", url = "", audio = null) => {
+            const res = await axios.post("https://ss.xingzhige.com/music_card/card", {
+                type, title, content, image, url, ...audio ? { audio } : {}
+            }, {
+                headers: { 'Content-Type': 'application/json;charset=utf-8' },
+                timeout: 15000
+            });
+
+            const msg = {
+                type: 'json',
+                data: {
+                    data: JSON.stringify(res.data)
+                }
+            };
+
+            chatData.uid.startsWith("target_")
+                ? spark.QClient.sendPrivateMsg(chatData.uid.slice(7), msg)
+                : spark.QClient.sendGroupMsg(chatData.uid, msg);
+
+            return "卡片信息已尝试发送";
+        }
+    },
+
     // 外置视觉模型
     "look_image_info": {
         definition: {

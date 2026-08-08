@@ -280,8 +280,11 @@ async function onMessage(chatId, pack, reply) {
         const currentMsg = pack.raw_message || '';
 
         // 忽略相同内容的消息
-        if (config.call.debounce.ignoreSame && ctx.processing && currentMsg === ctx.lastMsg) {
-            logger.debug(`[Debounce] UID ${chatId} 忽略重复消息: ${currentMsg.substring(0, 30)}...`);
+        if (config.call.debounce.ignoreSame
+            && ctx.processing
+            && currentMsg === ctx.lastMsg
+        ) {
+            // logger.debug(`[Debounce] UID ${chatId} 忽略重复消息: ${currentMsg.substring(0, 30)}...`);
             return;
         }
 
@@ -289,12 +292,12 @@ async function onMessage(chatId, pack, reply) {
         if (ctx.processing) {
             // 检查缓存是否已满
             if (ctx.cache.length >= config.call.debounce.maxCache) {
-                logger.warn(`[Debounce] UID ${chatId} 缓存已满，丢弃最旧消息`);
+                // logger.warn(`[Debounce] UID ${chatId} 缓存已满，丢弃最旧消息`);
                 ctx.cache.shift();
             }
 
             ctx.cache.push({ pack, reply, raw_message: currentMsg, timestamp: Date.now() });
-            logger.debug(`[Debounce] UID ${chatId} 缓存消息，当前缓存: ${ctx.cache.length}`);
+            // logger.debug(`[Debounce] UID ${chatId} 缓存消息，当前缓存: ${ctx.cache.length}`);
             return;
         }
 

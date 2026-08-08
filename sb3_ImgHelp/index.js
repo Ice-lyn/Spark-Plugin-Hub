@@ -150,11 +150,11 @@ spark.on("event.aichat.starts", () => {
                 }
             }
         },
-        call: async (chatData, image) => {
-            if (!imgMap.has(image))
-                return `无法找到与 "" 相关的图片/表情，请修正后再次尝试，或调用get_preset_image_list工具获取新列表`;
+        call: async (chatData, imageStr) => {
+            if (!imgMap.has(imageStr))
+                return `无法找到与 "${imageStr}" 相关的图片/表情，请修正后再次尝试，或调用get_preset_image_list工具获取新列表`;
 
-            const msg = spark.msgbuilder.img(imgMap.get(image))
+            const msg = spark.msgbuilder.img(imgMap.get(imageStr));
             if (chatData.is_target)
                 return spark.QClient.sendPrivateMsg(chatData.uid.slice(7), msg);
             else

@@ -1,6 +1,16 @@
 const knowledge = [
-    "这是一条默认知识库"
+    "CQ码-约定格式:[CQ:类型,参数=值,参数=值]",
+    "CQ码-使用:与普通消息一起发送，如：'[CQ:at,qq=10086]你好'，该断消息会被解析为：'@小明 你好'，除非特殊标注，大多CQ码都不能与普通消息一同发送",
+    "CQ码-AT:[CQ:at,qq=QQ号/all,name=当找不到qq时使用该名称，可选参数]，可与文本消息共存",
+    "CQ码-图片:[CQ:image,file=URL/base64,summary=说明文本，可选]，可与文本消息共存",
+    "CQ码-语音:[CQ:record,file=URL/base64]",
+    "CQ码-视频:[CQ:video,file=URL/base64]",
+    "CQ码-猜拳魔法表情:[CQ:rps]",
+    "CQ码-掷骰子魔法表情:[CQ:dice]",
+    "CQ码-分享好友:[CQ:contact,type=qq,id=QQ号]",
+    "CQ码-分享群聊:[CQ:contact,type=group,id=群号，群不存在时不显示]"
 ];
+
 
 module.exports = (query, maxResults = 10) => {
     const keywords = query.trim().toLowerCase().split(/\s+/);

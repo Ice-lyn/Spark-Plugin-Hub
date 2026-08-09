@@ -320,7 +320,7 @@ async function formatMsg(msg, pack) {
                 const info = await spark.QClient.getGroupMemberInfo(pack.group_id, t.data.qq)
                 return `@${info.card || info.nickname || `${t.data.qq}`}`;
             }
-            default: return "";
+            default: return `[${t.type}]`;
         }
     }));
     return results.join("");

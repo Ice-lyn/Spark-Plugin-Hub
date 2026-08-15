@@ -304,7 +304,10 @@ async function formatMsg(msg, pack) {
     const results = await Promise.all(msg.map(async (t) => {
         switch (t.type) {
             case 'text': return t.data.text;
+            case 'file': return `[文件]${t.data.file}`;
             case 'image': {
+                if (t.data.sub_type === 1)
+                    return t.data.summary || "[动画表情]";
                 return config.QQ2MC.Chat.imgUrl
                     ? `[图片](${t.data.url})`
                     : "[图片]"

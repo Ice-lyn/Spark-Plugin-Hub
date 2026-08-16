@@ -1,9 +1,16 @@
 const knowledge = require("./knowledge.js");
 const tools = require("./tools.js");
 
+// 下面是配置项
+// 修改后要重载才能生效
+// 看不懂注释的话 将本插件所有文件丢给ai
+// 或者加我 QQ 1669044502 提问或反馈 owo
 module.exports = {
     debug: false,
-    admin: [399844389, 1669044502, 3501147230], // 可以使用aichat指令的人
+
+    // 可以使用/aichat指令的人
+    // 填QQ号
+    admin: [399844389, 1669044502, 3501147230], 
 
     // === AI设置 === //
     ai: {
@@ -13,10 +20,13 @@ module.exports = {
         maxTokens: 50000, // token上线
         temperature: 1.3, // 模型温度
         retry: 5, // 最多重试次数
-        timeout: 30000,
-        errorMsg: false, // 报错时返回提示给用户
+        timeout: 30000, // 超时时间
+        errorMsg: false, // 向用户发送报错信息
+
+        untools: ["send_ws_pack"], // 禁用工具（填工具名）
 
         // 回退模型设置
+        // 如果主模型报错了 就会调用这个
         fallback: {
             key: "sk-000000000000000000000000000000000000000000000000",
             url: "https://apihub.agnes-ai.com/v1/chat/completions",
@@ -25,6 +35,7 @@ module.exports = {
 
         // 外置视觉模型配置
         // 如果你的主模型支持视觉也可以开
+        // 开启后会将视觉识别包装成标准工具发送给主模型
         lookai: {
             enable: true,
             key: "sk-000000000000000000000000000000000000000000000000",
@@ -32,7 +43,8 @@ module.exports = {
             name: "agnes-2.0-flash",
         },
 
-        system: ([ // 系统提示词
+        // 系统提示词
+        system: ([
             "你叫兮兮(QQ号 3911773729)，QQ里的普通朋友，要像真人一样聊天～",
             "",
             "## 说话方式",
@@ -69,36 +81,45 @@ module.exports = {
             "- 别叫别人'QQ号'或'user'，叫名字，可以亲切一点",
         ].join("\n")),
 
-        tools: tools, // 工具调用
-        untools: ["send_ws_pack"], // 不使用的工具
-        knowledge: knowledge, // 搜索知识库数据
+        tools: tools,
+        knowledge: knowledge,
     },
 
     // === 响应设置 === //
     call: {
-        // 群聊
+        // 群聊设置
         group: {
-            enable: true, // 启用
+            enable: true, // 开关
             keywords: ["兮兮"], // 关键词触发
             at: true, // 仅接收at
-            all: false, // 接收所有消息
-            data: [ // 响应的群聊
+            all: false, // 接收所有消息 （不建议启用，打开后别人每发一句就用一次ai）
+
+            // 响应的群聊
+            // 如果列表内包含"all"则响应所有已加入的群
+            // (填你自己的，下面这几个是我自用的可以删掉)
+            data: [
                 1087355660, // 测试群
                 1029879634, // 1
                 856868277, // 2
                 464262043, // 4
                 "all"
             ],
-            undata: [ // 不响应的群聊
+
+            // 不响应的群聊
+            // 如题，不响应的群，即使他在上一项列表内
+            undata: [
                 759676433,
                 642538983
             ]
         },
 
-        // 私信
+        // 私信设置
         private: {
             enable: true, // 启用
-            data: [ // 响应的私信
+
+            // 响应的私信
+            // 如果列表内包含"all"则响应所有
+            data: [ 
                 1669044502,
                 "all"
             ],
@@ -106,6 +127,7 @@ module.exports = {
         },
 
         // 信息防抖配置
+        // * 这一功能我拿AI跑的，不想用可以关掉
         debounce: {
             enable: true, // 是否启用
             timeout: 5000, // 等待超时时间（毫秒），超时后自动发送缓存消息
@@ -116,9 +138,16 @@ module.exports = {
 
     // === 输入设置 === //
     input: {
-        msgFormat: true, // 信息输入格式化
-        chatList: 20, // 在输入中包含历史聊天记录的条数
-        type: { // 消息输入类型
+
+        // 信息输入格式化
+        // 建议启用，可以让模型感知时间和区分用户，不过可能会增加token消耗
+        // 启用后模型收到的信息：[1980-01-01 00:00][冰凌呀(1669044502)] >> Hello World
+        // 不启用时模型收到的信息: Hello World
+        msgFormat: true, 
+
+        // 消息输入类型
+        // 用于控制哪些东西可以发送给模型
+        type: { 
             image: false, // 图片消息
             audio: false, // 语音消息
             video: false // 视频消息
@@ -127,12 +156,15 @@ module.exports = {
 
     // === 回复设置 === //
     reply: {
-        tokenInfo: false, // Token消耗显示
-        CQCode: true, // 解析CQ码消息
-        linebreak: {// 多次回复
+        tokenInfo: false, // Token消耗显示，开启后用户会收到消耗信息
+        CQCode: true, // 解析CQ码消息，不懂得看知识库去
+
+        // 自动分段
+        // 让AI回复时像真人一样分段发送
+        linebreak: { 
             enable: true, // 启用
             timeout: 500, // 延迟毫秒
-            codeBlock: true, // 启用代码块分割保护
+            codeBlock: true, // 启用代码块分割保护 （发送代码时不会换行）
             split: /[。；\n]+/ // 分割的正则表达式
         }
     },

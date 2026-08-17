@@ -503,7 +503,7 @@ async function callAPI(uid, data, pack, callback = (() => { }), canAddMemory = t
                 callback(`${config.i18n.error.retry}(${retry + 1}/${config.ai.retry})\nError: ${config.i18n.error.code[e.response?.status] ?? ""}\n  ${e.message}`)
             return callAPI(uid, data, pack, callback, false);
         }
-        if (!is_fullback) {
+        if (!is_fullback && config.ai.fallback.enable) {
             if (config.ai.errorMsg)
                 callback(`${config.i18n.error.fullback}${config.ai.fallback.name}...\nError: ${config.i18n.error.code[e.response?.status] ?? ""}\n  ${e.message}`, null)
             return callAPI(uid, data, pack, callback, false, true);

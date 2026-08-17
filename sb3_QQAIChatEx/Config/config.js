@@ -28,6 +28,7 @@ module.exports = {
         // 回退模型设置
         // 如果主模型报错了 就会调用这个
         fallback: {
+            enable: true,
             name: "agnes-2.0-flash",
             key: "sk-000000000000000000000000000000000000000000000000",
             url: "https://api.agnes-ai.cn/v1/chat/completions"

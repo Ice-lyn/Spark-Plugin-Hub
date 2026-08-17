@@ -1,4 +1,4 @@
 在本地提交代码并打标签推送：
 
-git tag v1.1.8
-git push origin v1.1.8
+git tag v0.0.0
+git push origin v0.0.0

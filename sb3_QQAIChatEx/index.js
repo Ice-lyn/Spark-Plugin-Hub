@@ -622,6 +622,14 @@ function cleanTools(tools, untools) {
     return tools;
 }
 
+// 翻译语句
+function replaceMsg(text, data) {
+    return text.replace(
+        /%(\w+)/g,
+        (_, key) => data[key] ?? `%${key}`
+    );
+} 
+
 // ==== 记忆管理相关 ==== //
 
 // 获取记忆

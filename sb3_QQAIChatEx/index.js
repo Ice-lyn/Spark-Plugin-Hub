@@ -495,15 +495,17 @@ async function callAPI(uid, data, pack, callback = (() => { }), canAddMemory = t
             return callAPI(uid, data, pack, callback, false);
         }
     } catch (e) {
-        logger.error('[QQAIChatEx] API 调用失败: ' + e);
+        logger.error(`[QQAIChatEx] API 调用失败: ${config.i18n.error.code[error.response.status] ?? ""}\n- ${e}`);
         const retry = retryMap.get(uid) ?? 0;
         if (retry < (config.ai.retry ?? 0)) {
             retryMap.set(uid, retry + 1);
-            if (config.ai.errorMsg) callback(`这道题有点难呢！让兮兮再思考一会儿...(${retry + 1}/${config.ai.retry})\n${e.message}`)
+            if (config.ai.errorMsg)
+                callback(`${config.i18n.error.retry}(${retry + 1}/${config.ai.retry})\nError: ${config.i18n.error.code[e.response?.status] ?? ""}\n  ${e.message}`)
             return callAPI(uid, data, pack, callback, false);
         }
         if (!is_fullback) {
-            if (config.ai.errorMsg) callback(`这道题太难了！让兮兮去请外援: ${config.ai.fallback.name}...\n${e.message}`, null)
+            if (config.ai.errorMsg)
+                callback(`${config.i18n.error.fullback}${config.ai.fallback.name}...\nError: ${config.i18n.error.code[e.response?.status] ?? ""}\n  ${e.message}`, null)
             return callAPI(uid, data, pack, callback, false, true);
         }
 
@@ -521,7 +523,7 @@ async function callAPI(uid, data, pack, callback = (() => { }), canAddMemory = t
 
         }
 
-        if (config.ai.errorMsg) callback(`这道题有点难呢...我们等下再来学习吧!\n${e.message}`, null);
+        if (config.ai.errorMsg) callback(`${config.i18n.error.error}\nError: ${config.i18n.error.code[e.response?.status] ?? ""}\n  ${e.message}`, null);
     }
 }
 

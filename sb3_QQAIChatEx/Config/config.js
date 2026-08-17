@@ -39,9 +39,9 @@ module.exports = {
         // 开启后会将视觉识别包装成标准工具发送给主模型
         lookai: {
             enable: true,
-            key: "sk-000000000000000000000000000000000000000000000000",
-            url: "https://apihub.agnes-ai.com/v1/chat/completions",
-            name: "agnes-2.0-flash",
+            name: "sensenova-6.8-flash-lite",
+            key: "sk-00000000000000000000000000000000",
+            url: "https://token.sensenova.cn/v1/chat/completions"
         },
 
         // 系统提示词
@@ -110,7 +110,8 @@ module.exports = {
             // 如题，不响应的群，即使他在上一项列表内
             undata: [
                 759676433,
-                642538983
+                642538983,
+                1001961968
             ]
         },
 
@@ -173,17 +174,19 @@ module.exports = {
     // === 翻译设置 === //
     i18n: {
         error: {
-            error: "这道题有点难呢...我们等下再来学习吧!",
-            retry: "这道题有点难呢！让兮兮再思考一会儿...",
-            fullback: "这道题太难了！让兮兮去请外援: ",
+            logger: "[QQAIChatEx] API 调用失败: %code\n- %err",
+            error: "这道题有点难呢...我们等下再来学习吧!\nError: %code\n- %err",
+            retry: "这道题有点难呢！让兮兮再思考一会儿...(%retry/%maxRetry)\nError: %code\n- %err",
+            fullback: "这道题太难了！让兮兮去请外援: %name\nError: %code\n- %err",
             code: {
-                400: "请求体格式错误",
-                401: "key失效",
-                402: "余额不足",
-                422: "参数错误",
-                429: "请求速率上限",
-                500: "服务器内部错误",
-                503: "服务器繁忙"
+                400: "400-请求体格式错误",
+                401: "401-key失效",
+                402: "402-余额不足",
+                404: "404-找不到端点",
+                422: "422-参数错误",
+                429: "429-请求速率上限",
+                500: "500-服务器内部错误",
+                503: "503-服务器繁忙"
             }
         },
     },

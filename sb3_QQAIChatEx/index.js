@@ -495,17 +495,29 @@ async function callAPI(uid, data, pack, callback = (() => { }), canAddMemory = t
             return callAPI(uid, data, pack, callback, false);
         }
     } catch (e) {
-        logger.error(`[QQAIChatEx] API 调用失败: ${config.i18n.error.code[error.response.status] ?? ""}\n- ${e}`);
+        logger.error(replaceMsg(config.i18n.error.logger, {
+            code: config.i18n.error.code[e.response.status] ?? e.response?.status,
+            err: e
+        }));
         const retry = retryMap.get(uid) ?? 0;
         if (retry < (config.ai.retry ?? 0)) {
             retryMap.set(uid, retry + 1);
             if (config.ai.errorMsg)
-                callback(`${config.i18n.error.retry}(${retry + 1}/${config.ai.retry})\nError: ${config.i18n.error.code[e.response?.status] ?? ""}\n  ${e.message}`)
+                callback(replaceMsg(`\`\`\`${config.i18n.error.retry}\`\`\``, {
+                    retry: retry + 1,
+                    maxRetry: config.ai.retry,
+                    code: config.i18n.error.code[e.response?.status] ?? e.response?.status,
+                    err: e.message
+                }));
             return callAPI(uid, data, pack, callback, false);
         }
         if (!is_fullback && config.ai.fallback.enable) {
             if (config.ai.errorMsg)
-                callback(`${config.i18n.error.fullback}${config.ai.fallback.name}...\nError: ${config.i18n.error.code[e.response?.status] ?? ""}\n  ${e.message}`, null)
+                callback(replaceMsg(`\`\`\`${config.i18n.error.fullback}\`\`\``, {
+                    name: config.ai.fallback.name,
+                    code: config.i18n.error.code[e.response?.status] ?? e.response?.status,
+                    err: e.message
+                }), null);
             return callAPI(uid, data, pack, callback, false, true);
         }
 
@@ -523,7 +535,11 @@ async function callAPI(uid, data, pack, callback = (() => { }), canAddMemory = t
 
         }
 
-        if (config.ai.errorMsg) callback(`${config.i18n.error.error}\nError: ${config.i18n.error.code[e.response?.status] ?? ""}\n  ${e.message}`, null);
+        if (config.ai.errorMsg)
+            callback(replaceMsg(`\`\`\`${config.i18n.error.error}\`\`\``, {
+                code: config.i18n.error.code[e.response?.status] ?? e.response?.status,
+                err: e.message
+            }), null);
     }
 }
 

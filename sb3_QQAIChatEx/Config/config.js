@@ -10,7 +10,7 @@ module.exports = {
 
     // 可以使用/aichat指令的人
     // 填QQ号
-    admin: [399844389, 1669044502, 3501147230], 
+    admin: [399844389, 1669044502, 3501147230],
 
     // === AI设置 === //
     ai: {
@@ -28,9 +28,9 @@ module.exports = {
         // 回退模型设置
         // 如果主模型报错了 就会调用这个
         fallback: {
+            name: "agnes-2.0-flash",
             key: "sk-000000000000000000000000000000000000000000000000",
-            url: "https://apihub.agnes-ai.com/v1/chat/completions",
-            name: "agnes-2.0-flash"
+            url: "https://api.agnes-ai.cn/v1/chat/completions"
         },
 
         // 外置视觉模型配置
@@ -119,7 +119,7 @@ module.exports = {
 
             // 响应的私信
             // 如果列表内包含"all"则响应所有
-            data: [ 
+            data: [
                 1669044502,
                 "all"
             ],
@@ -143,11 +143,11 @@ module.exports = {
         // 建议启用，可以让模型感知时间和区分用户，不过可能会增加token消耗
         // 启用后模型收到的信息：[1980-01-01 00:00][冰凌呀(1669044502)] >> Hello World
         // 不启用时模型收到的信息: Hello World
-        msgFormat: true, 
+        msgFormat: true,
 
         // 消息输入类型
         // 用于控制哪些东西可以发送给模型
-        type: { 
+        type: {
             image: false, // 图片消息
             audio: false, // 语音消息
             video: false // 视频消息
@@ -161,7 +161,7 @@ module.exports = {
 
         // 自动分段
         // 让AI回复时像真人一样分段发送
-        linebreak: { 
+        linebreak: {
             enable: true, // 启用
             timeout: 500, // 延迟毫秒
             codeBlock: true, // 启用代码块分割保护 （发送代码时不会换行）

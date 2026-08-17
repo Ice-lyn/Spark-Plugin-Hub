@@ -338,8 +338,8 @@ const tools = {
                     properties: {
                         count: {
                             type: 'integer',
-                            description: '要获取的消息数量，默认10条，最大为400',
-                            default: 10,
+                            description: '要获取的消息数量(1-400)',
+                            default: 20,
                             minimum: 1,
                             maximum: 400
                         },

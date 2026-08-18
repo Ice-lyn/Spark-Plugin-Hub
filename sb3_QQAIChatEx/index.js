@@ -331,8 +331,14 @@ async function onMessage(chatId, pack, reply) {
         if (usage && config.reply.tokenInfo) {
             additionalMsg = `📊 Token消耗`
                 + `\n  ├─ 输入: ${usage?.prompt_tokens}`
-                + `\n  │ ├─ 命中: ${usage?.prompt_cache_hit_tokens || 0}`
-                + `\n  │ └─ 未命中: ${usage?.prompt_cache_miss_tokens || 0}`
+                + (usage?.prompt_cache_hit_tokens
+                    ? `\n  │ ├─ 命中: ${usage?.prompt_cache_hit_tokens}`
+                    : ""
+                )
+                + (usage?.prompt_cache_miss_tokens
+                    ? `\n  │ └─ 未命中: ${usage?.prompt_cache_miss_tokens || 0}`
+                    : ""
+                )
                 + `\n  ├─ 输出: ${usage?.completion_tokens}`
                 + `\n  └─ 总计: ${usage?.total_tokens}`
                 + `\n=================`;
@@ -646,7 +652,7 @@ function replaceMsg(text, data) {
         /%(\w+)/g,
         (_, key) => data[key] ?? `%${key}`
     );
-} 
+}
 
 // ==== 记忆管理相关 ==== //
 

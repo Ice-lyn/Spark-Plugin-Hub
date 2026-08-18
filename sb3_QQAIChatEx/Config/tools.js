@@ -126,6 +126,41 @@ const tools = {
         }
     },
 
+    // 创建定时提示
+    "add_timed_tip": {
+        definition: {
+            type: "function",
+            function: {
+                description: "创建延迟提醒，可用于模型唤醒，重载失效",
+                parameters: {
+                    type: "object",
+                    properties: {
+                        "time": {
+                            "type": "number",
+                            "description": "提醒时间/分钟,支持小数 (如0.5表示30秒)",
+                            "minimum": 0,
+                            "maximum": 1440.00,
+                        },
+                        tip: {
+                            type: "string",
+                            description: "到点后向模型发送的备注",
+                        }
+                    },
+                    required: ["time", "tip"]
+                }
+            }
+        },
+        call: (chatData, time, tip) => {
+            const thisTime = new Date(Date.now()).toLocaleString('zh-CN', { hour12: false });
+            const { callAPI, uid, pack, callback } = chatData;
+            setTimeout(() =>
+                callAPI(uid, `[System] 在 ${thisTime} 设置的定时提醒已触发，并附带通知：${tip}`, pack, callback),
+                time * 60 * 1000
+            );
+            return `定时提醒任务已创建，将会在${new Date(Date.now() + time * 60 * 1000).toLocaleString('zh-CN', { hour12: false })}提醒`;
+        }
+    },
+
     // 语音合成
     "send_ai_tts_msg": {
         definition: {

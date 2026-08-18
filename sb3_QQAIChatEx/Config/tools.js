@@ -292,6 +292,7 @@ const tools = {
             return {
                 qq: data.uin,
                 name: data.nick,
+                avatar: `http://q1.qlogo.cn/g?b=qq&s=100&nk=${qq}`,
                 remark: data.remark,
                 sex: data.sex,
                 age: data.age,

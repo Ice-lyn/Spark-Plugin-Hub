@@ -453,6 +453,8 @@ async function callAPI(uid, data, pack, callback = (() => { }), canAddMemory = t
                 uid: uid,
                 pack: pack,
                 config: config,
+                callAPI: callAPI,
+                callback: callback,
                 is_target: uid.startsWith("target_")
                 // 以后想到了再加...
             };

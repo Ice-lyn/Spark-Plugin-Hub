@@ -98,79 +98,98 @@ async function onCommand(uid, pack, reply) {
 
     switch (cmd[0]) {
         case "memory": { // 记忆相关
-            if (cmd[1] === "reload") {
-                memoryMap.delete(uid);
-                reply([
-                    spark.msgbuilder.reply(pack.real_id),
-                    spark.msgbuilder.text("记忆重载...")
-                ])
-
-            } else if (cmd[1] === "compress") {
-                memoryMap.delete(uid);
-                reply([
-                    spark.msgbuilder.reply(pack.real_id),
-                    spark.msgbuilder.text((await simpleCompress(uid)) + "")
-                ])
-
-            } else if (cmd[1] === "delete") {
-                memoryMap.delete(uid);
-                try { fs.unlinkSync(path.join(memoryDir, `${uid}.json`)) } catch (e) { }
-                reply([
-                    spark.msgbuilder.reply(pack.real_id),
-                    spark.msgbuilder.text("记忆信息已清理..."),
-                ])
-
-            } else if (cmd[1] === "system") {
-                const prompt = cmd.slice(2).join(" ");
-                const memory = getMemory(uid).filter(item => item.role !== 'system');
-
-                if (system === "") { // 恢复默认
-                    setMemory(uid, memory)
+            switch (cmd[1]) {
+                case "reload": // 重载
+                    memoryMap.delete(uid);
                     reply([
                         spark.msgbuilder.reply(pack.real_id),
-                        spark.msgbuilder.text("提示词已恢复默认"),
-                    ])
-
-                } else {
-                    setMemory(uid, [
-                        {
-                            role: "system",
-                            content: prompt
-                        },
-                        ...memory
+                        spark.msgbuilder.text("记忆重载...")
                     ]);
+                    break;
 
+                case "compress": // 清理工具调用记录
+                    memoryMap.delete(uid);
                     reply([
                         spark.msgbuilder.reply(pack.real_id),
-                        spark.msgbuilder.text("提示词已设置，将会在当前场景下生效..."),
-                    ])
+                        spark.msgbuilder.text((await simpleCompress(uid)) + "")
+                    ]);
+                    break;
+
+                case "delete": // 删除记忆
+                    memoryMap.delete(uid);
+                    try { fs.unlinkSync(path.join(memoryDir, `${uid}.json`)) } catch (e) { }
+                    reply([
+                        spark.msgbuilder.reply(pack.real_id),
+                        spark.msgbuilder.text("记忆信息已删除..."),
+                    ]);
+                    break;
+
+                case "system": { // 设置提示词
+                    const memory = getMemory(uid).filter(item => item.role !== 'system');
+
+                    if (system === "") { // 恢复默认
+                        setMemory(uid, memory)
+                        reply([
+                            spark.msgbuilder.reply(pack.real_id),
+                            spark.msgbuilder.text("提示词已恢复默认")
+                        ])
+                    } else {
+                        setMemory(uid, [
+                            {
+                                role: "system",
+                                content: cmd.slice(2).join(" ")
+                            },
+                            ...memory
+                        ]);
+
+                        reply([
+                            spark.msgbuilder.reply(pack.real_id),
+                            spark.msgbuilder.text("提示词已设置，将会在当前场景下生效..."),
+                        ])
+                    }
+                    break;
                 }
             }
-            break;
         }
 
         case "tool": {
-            if (cmd[1] == null)
-                return reply(JSON.stringify(tools.definition, null, 4));
-            else if (cmd[1] == "_debug") {
-                const toolArgs = toolsArgsSorting(
-                    toolsIndex.get(cmd[2]), (cmd.slice(3).join(" ") || '{}')
-                );
-                reply(`${cmd[2]}\n${toolsIndex.get(cmd[2])}\n${JSON.stringify(toolArgs, null, 4)}`);
+            // 输出所有工具
+            if (!cmd[1])
+                return reply(tools.definition.map(tool => {
+                    tool = tool.function;
+                    return [
+                        `name: ${tool.name}`,
+                        `description: ${tool.description}`,
+                        `properties: ${JSON.stringify(tool.properties, null, 4)}`,
+                        `required: ${JSON.stringify(tool.required)}`
+                    ].join("\n");
+                }))
+
+            // 调试工具输入
+            if (cmd[1] === "_debug") {
+                reply([
+                    `name: ${cmd[2]}`,
+                    `index: ${toolsIndex.get(cmd[2])}`,
+                    `output: ${JSON.stringify(toolsArgsSorting(
+                        toolsIndex.get(cmd[2]), (cmd.slice(3).join(" ") || '{}')
+                    ), null, 4)}`
+                ].join("\n"));
                 return;
             }
 
+            // 模拟工具调用
             try {
-                const toolArgs = toolsArgsSorting(
-                    toolsIndex.get(cmd[1]), (cmd.slice(2).join(" ") || '{}')
-                );
                 const toolsData = await tools.calls[cmd[1]](
                     {
                         uid: uid,
                         pack: pack,
                         config: config,
-                        is_target: uid.startsWith("target_")
-                    }, ...toolArgs
+                        is_target: uid.startsWith("target_"),
+                        callAPI: (...data) => reply(`"${cmd[1]}" -> callAPI:\n${JSON.stringify(data, null, 4)}`),
+                        callback: (...data) => reply(`"${cmd[1]}" -> callback:\n${JSON.stringify(data, null, 4)}`),
+                    }, ...toolsArgsSorting(
+                        toolsIndex.get(cmd[1]), (cmd.slice(2).join(" ") || '{}')
+                    )
                 );
 
                 reply((typeof toolsData === 'string'
@@ -183,6 +202,8 @@ async function onCommand(uid, pack, reply) {
             break;
         }
 
+        // 查看或临时设置配置
+        // AI跑的这一功能
         case "config": {
             if (cmd[1] === "set") {
                 if (cmd.length < 3) return;

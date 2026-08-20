@@ -373,12 +373,12 @@ async function onMessage(chatId, pack, reply) {
                     ? `\n  │ ├─ 命中: ${prompt_cache_hit_tokens}`
                     : ""
                 )
-                + (usage?.prompt_cache_miss_tokens
-                    ? `\n  │ └─ 未命中: ${usage?.prompt_cache_miss_tokens || 0}`
+                + (prompt_cache_miss_tokens
+                    ? `\n  │ └─ 未命中: ${prompt_cache_miss_tokens || 0}`
                     : ""
                 )
-                + `\n  ├─ 输出: ${usage?.completion_tokens}`
-                + `\n  └─ 总计: ${usage?.total_tokens}`
+                + `\n  ├─ 输出: ${completion_tokens}`
+                + `\n  └─ 总计: ${total_tokens}`
                 + `\n=================`;
         };
 

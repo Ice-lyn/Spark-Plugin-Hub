@@ -505,16 +505,15 @@ async function callAPI(uid, data, pack, callback = (() => { }), canAddMemory = t
 
             for (const toolCall of message.tool_calls) {
                 const toolName = toolCall.function.name;
-                const toolArgs = toolsArgsSorting(
-                    toolsIndex.get(toolName), (toolCall.function.arguments || '{}')
-                );
 
                 // 执行工具
                 let toolResult = null;
                 if (tools.calls[toolName]) {
                     try {
                         toolResult = await Promise.resolve(
-                            tools.calls[toolName](chatData, ...toolArgs)
+                            tools.calls[toolName](chatData, ...toolsArgsSorting(
+                                toolsIndex.get(toolName), (toolCall.function.arguments || '{}')
+                            ))
                         );
                         toolResult = typeof toolResult === 'string' ? toolResult : JSON.stringify(toolResult);
                     } catch (e) {
@@ -879,10 +878,15 @@ async function formatMsg(pack, mode = 0) {
                         };
                     }
                     case 'at': {
-                        return {
-                            type: "text",
-                            text: `@${(await getUserName(pack.group_id, t.data.qq))}`
-                        };
+                        try {
+                            const info = await spark.QClient.getGroupMemberInfo(pack.group_id, t.data.qq);
+                            return {
+                                type: "text",
+                                text: `@${info.card || info.nickname || userId}`
+                            };
+                        } catch (e) {
+                            return `${userId}`;
+                        }
                     }
                     case 'image': {
                         if (!config.input.type.image) return { type: "text", text: `[type=image,URL=${t.data.url}]` };

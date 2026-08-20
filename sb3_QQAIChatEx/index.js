@@ -548,7 +548,7 @@ async function callAPI(uid, data, pack, callback = (() => { }), canAddMemory = t
         if (retry < (config.ai.retry ?? 0)) {
             retryMap.set(uid, retry + 1);
             if (config.ai.errorMsg)
-                callback(replaceMsg(`\`\`\`${config.i18n.error.retry}\`\`\``, {
+                callback(replaceMsg(`\`\`\`\n${config.i18n.error.retry}\n\`\`\``, {
                     retry: retry + 1,
                     maxRetry: config.ai.retry,
                     code: config.i18n.error.code[e.response?.status] ?? e.response?.status,
@@ -683,7 +683,7 @@ function cleanTools(tools, untools) {
     return tools;
 }
 
-// 翻译语句
+// 翻译i18n语句
 function replaceMsg(text, data) {
     return text.replace(
         /%(\w+)/g,
@@ -861,11 +861,9 @@ function safeSlice(memory, maxLength) {
 }
 
 // === 格式化消息相关 === //
-
+// 格式化消息
 async function formatMsg(pack, mode = 0) {
     if (mode === 0) { // 输入消息 (QQ -> AI)
-        const qid = pack.sender.user_id;
-        const name = pack.sender.card || pack.sender.nickname || qid;
         let msg = pack.message;
 
         msg = await Promise.all(
@@ -889,7 +887,8 @@ async function formatMsg(pack, mode = 0) {
                         }
                     }
                     case 'image': {
-                        if (!config.input.type.image) return { type: "text", text: `[type=image,URL=${t.data.url}]` };
+                        if (!config.input.type.image)
+                            return { type: "text", text: `[type=image,URL=${t.data.url}]` };
                         return {
                             type: "image_url",
                             image_url: {
@@ -899,7 +898,8 @@ async function formatMsg(pack, mode = 0) {
                         };
                     }
                     case 'audio': {
-                        if (!config.input.type.audio) return { type: "text", text: `[type=audio,URL=${t.data.url}]` };
+                        if (!config.input.type.audio)
+                            return { type: "text", text: `[type=audio,URL=${t.data.url}]` };
                         return {
                             type: "audio_url",
                             audio_url: {
@@ -908,7 +908,8 @@ async function formatMsg(pack, mode = 0) {
                         };
                     }
                     case 'video': {
-                        if (!config.input.type.video) return { type: "text", text: `[type=video,URL=${t.data.url}]` };
+                        if (!config.input.type.video)
+                            return { type: "text", text: `[type=video,URL=${t.data.url}]` };
                         return {
                             type: "video_url",
                             video_url: {
@@ -923,12 +924,12 @@ async function formatMsg(pack, mode = 0) {
                         const replyPack = await spark.QClient.getMsg(t.data.id);
                         return {
                             type: "text",
-                            text: `---引用消息(CQ码)\n${replyPack.raw_message
+                            text: `---引用消息(CQ码)---\n \`\`\`${replyPack.raw_message
                                 .replace(/&#44;/g, ',')
                                 .replace(/&amp;/g, '&')
                                 .replace(/&#91;/g, '[')
                                 .replace(/&#93;/g, ']')
-                                }\n---`
+                                }\`\`\` \n---`
                         }
                     }
                     case 'face': {
@@ -947,60 +948,43 @@ async function formatMsg(pack, mode = 0) {
         );
 
         if (config.input.msgFormat) {
+            const qid = pack.sender.user_id;
+            const name = pack.sender.card || pack.sender.nickname || qid;
+
             msg = [
                 {
                     type: "text",
-                    text: ` [${new Date().toLocaleString('zh-CN', { hour12: false })}][${name}(${qid})] >> `
+                    text: `[${new Date().toLocaleString('zh-CN', { hour12: false })}][${name}(${qid})] >> `
                 },
                 ...msg
             ]
         }
 
-        msg = mergeText(msg, (textBuffer) => {
-            return {
-                type: "text",
-                text: textBuffer.map(t => t.text).join('')
-            };
-        });
+        // 合并连续文本
+        const result = [];
+        let textList = [];
 
-        return msg.filter(i => i !== undefined);
+        for (const msg of messages) {
+            if (msg.type === 'text')
+                textList.push(msg);
+            else {
+                if (textList.length > 0) {
+                    result.push({
+                        type: "text",
+                        text: textList.map(t => t.text).join("\n")
+                    });
+                    textList = [];
+                }
+                result.push(msg);
+            }
+        }
+
+        if (textList.length > 0)
+            result.push(mergeFn(textList));
+
+        return result;
     } else if (mode === 1) { // 输出消息 (AI -> QQ)
 
-    }
-}
-
-// 合并连续的文本
-function mergeText(messages, mergeFn) {
-    const result = [];
-    let textBuffer = [];
-
-    for (const msg of messages) {
-        if (msg.type === 'text') {
-            // 文本类型：放入缓冲区
-            textBuffer.push(msg);
-        } else {
-            // 非文本类型：先清空缓冲区，再添加当前元素
-            if (textBuffer.length > 0) {
-                result.push(mergeFn(textBuffer));
-                textBuffer = [];
-            }
-            result.push(msg);
-        }
-    }
-
-    // 处理最后可能残留的文本缓冲
-    if (textBuffer.length > 0)
-        result.push(mergeFn(textBuffer));
-    return result;
-}
-
-// 获取用户名称
-async function getUserName(groupId, userId) {
-    try {
-        const info = await spark.QClient.getGroupMemberInfo(groupId, userId);
-        return (info.card || info.nickname || `${userId}`);
-    } catch (e) {
-        return `${userId}`;
     }
 }
 

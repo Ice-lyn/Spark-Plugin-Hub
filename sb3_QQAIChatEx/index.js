@@ -295,7 +295,7 @@ async function onCommand(uid, pack, reply) {
 }
 
 async function onMessage(chatId, pack, reply) {
-    // === 防抖处理 === //
+    // 防抖处理
     if (config.call.debounce.enable) {
         const ctx = getDebounceContext(chatId);
         const currentMsg = pack.raw_message || '';
@@ -342,7 +342,7 @@ async function onMessage(chatId, pack, reply) {
         }
     }
 
-    callAPI(chatId, (await formatMsg(pack, 0)), pack, (msg, res) => {
+    callAPI(chatId, (await formatMsg(pack)), pack, (msg, res) => {
         if (msg === "" || msg === "[false_chat]") return;
 
         let additionalMsg = "";
@@ -350,10 +350,27 @@ async function onMessage(chatId, pack, reply) {
         // Token 显示
         const usage = res?.data?.usage;
         if (usage && config.reply.tokenInfo) {
-            additionalMsg = `📊 Token消耗`
-                + `\n  ├─ 输入: ${usage?.prompt_tokens}`
-                + (usage?.prompt_cache_hit_tokens
-                    ? `\n  │ ├─ 命中: ${usage?.prompt_cache_hit_tokens}`
+            const {
+                prompt_tokens,
+                prompt_cache_hit_tokens,
+                prompt_cache_miss_tokens,
+                completion_tokens,
+                total_tokens
+            } = usage;
+
+            // 一大坨的价格计算
+                + (prompt_cache_hit_tokens * config.i18n.token.prompt_cache_hit_tokens)
+                + (prompt_cache_miss_tokens * config.i18n.token.prompt_cache_miss_tokens)
+                + (completion_tokens * config.i18n.token.completion_tokens)
+                + (total_tokens - (completion_tokens
+                    + prompt_cache_hit_tokens
+                    + prompt_cache_miss_tokens
+                ) * config.i18n.token.prompt_cache_miss_tokens);
+
+            additionalMsg = `📊 Token消耗 (预计消耗 ${money} ¥)`
+                + `\n  ├─ 输入: ${prompt_tokens}`
+                + (prompt_cache_hit_tokens
+                    ? `\n  │ ├─ 命中: ${prompt_cache_hit_tokens}`
                     : ""
                 )
                 + (usage?.prompt_cache_miss_tokens

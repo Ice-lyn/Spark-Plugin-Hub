@@ -159,14 +159,14 @@ module.exports = {
     // === 回复设置 === //
     reply: {
         tokenInfo: false, // Token消耗显示，开启后用户会收到消耗信息
-        CQCode: true, // 解析CQ码消息，不懂得看知识库去
+        CQCode: true, // 解析CQ码消息，不懂的看知识库去
 
         // 自动分段
         // 让AI回复时像真人一样分段发送
         linebreak: {
             enable: true, // 启用
             timeout: 500, // 延迟毫秒
-            codeBlock: true, // 启用代码块分割保护 （发送代码时不会换行）
+            codeBlock: true, // 启用代码块分割保护 （被```包裹的内容不会换行）
             split: /[。；\n]+/ // 分割的正则表达式
         }
     },

@@ -173,6 +173,18 @@ module.exports = {
 
     // === 翻译设置 === //
     i18n: {
+
+        // 价格设置
+        // 默认用DS Flash的新价格
+        // 不是说好了ds下半年降价吗，为什么不降反升😭😭😭
+        // 哈吉梁 你这家伙
+        token: {
+            prompt_cache_hit_tokens: 0.1, // 缓存命中
+            prompt_cache_miss_tokens: 3.0, // 缓存未命中
+            completion_tokens: 9.0 // 输出
+        },
+
+        // 错误信息
         error: {
             logger: "[QQAIChatEx] API 调用失败: %code\n- %err",
             error: "这道题有点难呢...我们等下再来学习吧!\nError: %code\n- %err",
